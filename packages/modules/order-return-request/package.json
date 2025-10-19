@@ -1,0 +1,49 @@
+{
+    "name": "@mercurjs/order-return-request",
+    "version": "1.3.0",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist",
+        "!dist/**/__tests__",
+        "!dist/**/__mocks__",
+        "!dist/**/__fixtures__"
+    ],
+    "engines": {
+        "node": ">=20"
+    },
+    "license": "MIT",
+    "scripts": {
+        "build": "rimraf dist && tsc --build",
+        "migration:initial": " MIKRO_ORM_CLI_CONFIG=./mikro-orm.config.dev.ts medusa-mikro-orm migration:create --initial",
+        "migration:create": " MIKRO_ORM_CLI_CONFIG=./mikro-orm.config.dev.ts medusa-mikro-orm migration:create",
+        "migration:up": " MIKRO_ORM_CLI_CONFIG=./mikro-orm.config.dev.ts medusa-mikro-orm migration:up",
+        "orm:cache:clear": " MIKRO_ORM_CLI_CONFIG=./mikro-orm.config.dev.ts medusa-mikro-orm cache:clear"
+    },
+    "devDependencies": {
+        "@medusajs/cli": "catalog:",
+        "@medusajs/framework": "catalog:",
+        "@medusajs/test-utils": "catalog:",
+        "@mercurjs/framework": "workspace:*",
+        "@mikro-orm/cli": "catalog:",
+        "@mikro-orm/core": "catalog:",
+        "@mikro-orm/knex": "catalog:",
+        "@mikro-orm/migrations": "catalog:",
+        "@mikro-orm/postgresql": "catalog:",
+        "@swc/core": "catalog:",
+        "@swc/jest": "catalog:",
+        "awilix": "catalog:",
+        "jest": "catalog:",
+        "pg": "catalog:",
+        "rimraf": "catalog:",
+        "tsc-alias": "^1.8.6",
+        "typescript": "catalog:"
+    },
+    "peerDependencies": {
+        "@medusajs/framework": "catalog:",
+        "@mikro-orm/core": "catalog:",
+        "@mikro-orm/migrations": "catalog:",
+        "@mikro-orm/postgresql": "catalog:",
+        "awilix": "catalog:"
+    }
+}
