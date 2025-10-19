@@ -1,0 +1,69 @@
+{
+    "name": "@mercurjs/framework",
+    "author": "MercurJS <hello@mercurjs.com> (https://mercurjs.com)",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/mercurjs/mercur"
+    },
+    "keywords": [
+        "mercur",
+        "marketplace",
+        "medusajs",
+        "mercurjs"
+    ],
+    "version": "1.3.0",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist",
+        "!dist/**/__tests__",
+        "!dist/**/__mocks__",
+        "!dist/**/__fixtures__"
+    ],
+    "engines": {
+        "node": ">=20"
+    },
+    "license": "MIT",
+    "scripts": {
+        "build": "rimraf dist && tsc --build",
+        "migration:initial": " MIKRO_ORM_CLI_CONFIG=./mikro-orm.config.dev.ts medusa-mikro-orm migration:create --initial",
+        "migration:create": " MIKRO_ORM_CLI_CONFIG=./mikro-orm.config.dev.ts medusa-mikro-orm migration:create",
+        "migration:up": " MIKRO_ORM_CLI_CONFIG=./mikro-orm.config.dev.ts medusa-mikro-orm migration:up",
+        "orm:cache:clear": " MIKRO_ORM_CLI_CONFIG=./mikro-orm.config.dev.ts medusa-mikro-orm cache:clear"
+    },
+    "dependencies": {
+        "@babel/runtime": "catalog:",
+        "@medusajs/admin-sdk": "catalog:",
+        "@medusajs/icons": "catalog:",
+        "@medusajs/ui": "catalog:",
+        "@medusajs/workflows-sdk": "catalog:",
+        "express": "catalog:",
+        "posthog-node": "catalog:",
+        "react": "catalog:",
+        "react-dom": "catalog:",
+        "react-router-dom": "catalog:",
+        "stripe": "catalog:",
+        "zod": "catalog:"
+    },
+    "devDependencies": {
+        "@medusajs/framework": "catalog:",
+        "@medusajs/test-utils": "catalog:",
+        "@mikro-orm/cli": "catalog:",
+        "@mikro-orm/core": "catalog:",
+        "@mikro-orm/migrations": "catalog:",
+        "@mikro-orm/postgresql": "catalog:",
+        "@swc/core": "catalog:",
+        "@swc/jest": "catalog:",
+        "jest": "catalog:",
+        "rimraf": "catalog:",
+        "tsc-alias": "^1.8.6",
+        "typescript": "catalog:"
+    },
+    "peerDependencies": {
+        "@medusajs/framework": "catalog:",
+        "@mikro-orm/core": "catalog:",
+        "@mikro-orm/migrations": "catalog:",
+        "@mikro-orm/postgresql": "catalog:",
+        "awilix": "catalog:"
+    }
+}
