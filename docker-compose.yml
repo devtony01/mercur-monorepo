@@ -1,0 +1,136 @@
+services:
+  postgres:
+    container_name: mercur-postgres
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=mercur
+    networks:
+      - mercur-network
+    ports:
+      - 5432:5432
+    volumes:
+      - type: volume
+        source: postgres_data
+        target: /var/lib/postgresql/data
+
+  redis:
+    container_name: mercur-redis
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    hostname: redis
+    networks:
+      - mercur-network
+    ports:
+      - 6379:6379
+    volumes:
+      - type: volume
+        source: redis_data
+        target: /data
+
+  medusa:
+    container_name: mercur-medusa
+    build:
+      context: .
+      dockerfile: ./apps/medusa/Dockerfile
+      target: installer
+      args:
+        NODE_ENV: development
+        APP_ENV: development
+    depends_on:
+      - postgres
+      - redis
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/mercur
+      - REDIS_URL=redis://redis:6379
+      - STORE_CORS=http://localhost:8000
+      - ADMIN_CORS=http://localhost:5173,http://localhost:9000
+      - VENDOR_CORS=http://localhost:3001,http://localhost:9000
+      - AUTH_CORS=http://localhost:8000,http://localhost:3001,http://localhost:5173,http://localhost:9000
+      - JWT_SECRET=supersecret
+      - COOKIE_SECRET=supersecret
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_CALLBACK_URL=http://localhost:8000/auth/google/callback
+      - HAPIO_API_URL=${HAPIO_API_URL}
+      - HAPIO_API_TOKEN=${HAPIO_API_TOKEN}
+      - STRIPE_SECRET_API_KEY=${STRIPE_SECRET_API_KEY}
+      - STRIPE_CONNECTED_ACCOUNTS_WEBHOOK_SECRET=${STRIPE_CONNECTED_ACCOUNTS_WEBHOOK_SECRET}
+      - ALGOLIA_API_KEY=${ALGOLIA_API_KEY}
+      - ALGOLIA_APP_ID=${ALGOLIA_APP_ID}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - RESEND_FROM_EMAIL=${RESEND_FROM_EMAIL}
+      - MEDUSA_FF_INDEX_ENGINE=${MEDUSA_FF_INDEX_ENGINE}
+      - MEDUSA_FF_VIEW_CONFIGURATIONS=${MEDUSA_FF_VIEW_CONFIGURATIONS}
+    networks:
+      - mercur-network
+    ports:
+      - 9000:9000
+    volumes:
+      - ./apps/medusa/src:/app/apps/medusa/src
+    working_dir: /app/apps/medusa
+    command: ["pnpm", "dev"]
+
+  storefront:
+    container_name: mercur-storefront
+    build:
+      context: .
+      dockerfile: ./apps/storefront/Dockerfile
+      target: development
+      args:
+        NODE_ENV: development
+        APP_ENV: development
+    depends_on:
+      - medusa
+    env_file:
+      - .env
+    environment:
+      - MEDUSA_BACKEND_URL=http://medusa:9000
+      - NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY=${NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY}
+      - NEXT_PUBLIC_BASE_URL=http://localhost:8000
+      - NEXT_PUBLIC_DEFAULT_REGION=us
+      - NEXT_PUBLIC_STRIPE_KEY=${NEXT_PUBLIC_STRIPE_KEY}
+      - REVALIDATE_SECRET=supersecret
+    networks:
+      - mercur-network
+    ports:
+      - 8000:8000
+    volumes:
+      - ./apps/storefront/src:/app/apps/storefront/src
+      - ./apps/storefront/public:/app/apps/storefront/public
+
+  vendor-panel:
+    container_name: mercur-vendor-panel
+    build:
+      context: .
+      dockerfile: ./apps/vendor-panel/Dockerfile
+      target: installer
+      args:
+        NODE_ENV: development
+        APP_ENV: development
+    depends_on:
+      - medusa
+    env_file:
+      - .env
+    environment:
+      - VITE_MEDUSA_BACKEND_URL=http://medusa:9000
+      - VITE_BASE_URL=http://localhost:3001
+    networks:
+      - mercur-network
+    ports:
+      - 3001:3001
+    volumes:
+      - ./apps/vendor-panel/src:/app/apps/vendor-panel/src
+    working_dir: /app/apps/vendor-panel
+    command: ["pnpm", "dev"]
+
+networks:
+  mercur-network:
+    name: mercur-network
+
+volumes:
+  postgres_data:
+  redis_data:
