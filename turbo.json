@@ -1,0 +1,46 @@
+{
+  "$schema": "https://turborepo.org/schema.json",
+  "globalDependencies": ["**/.env.*local"],
+  "globalEnv": ["NODE_ENV"],
+  "ui": "tui",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
+    },
+    "medusa#migrate-dev": {
+      "cache": false
+    },
+    "medusa#dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "apps:dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "development": {
+      "cache": false,
+      "persistent": true
+    },
+    "generate:oas": {
+      "cache": false
+    },
+    "lint": {
+      "cache": false
+    },
+    "format": {
+      "cache": false
+    },
+    "precommit": {
+      "outputs": []
+    },
+    "test:eslint": {
+      "outputs": []
+    }
+  }
+}
