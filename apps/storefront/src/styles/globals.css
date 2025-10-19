@@ -1,0 +1,180 @@
+/* Defined colors variables */
+@import "colors.css";
+
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+@layer utilities {
+  /* Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  input:focus ~ label,
+  input:not(:placeholder-shown) ~ label {
+    @apply -translate-y-2 text-xsmall-regular;
+  }
+
+  input:focus ~ label {
+    @apply left-0;
+  }
+
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:focus,
+  select:-webkit-autofill,
+  select:-webkit-autofill:hover,
+  select:-webkit-autofill:focus {
+    border: 1px solid #212121;
+    -webkit-text-fill-color: #212121;
+    -webkit-box-shadow: 0 0 0px 1000px #fff inset;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  input[type="search"]::-webkit-search-decoration,
+  input[type="search"]::-webkit-search-cancel-button,
+  input[type="search"]::-webkit-search-results-button,
+  input[type="search"]::-webkit-search-results-decoration {
+    -webkit-appearance: none;
+  }
+
+  /* Embla Carousel */
+  .embla__container {
+    touch-action: pan-y pinch-zoom;
+  }
+  .embla__slide {
+    transform: translate3d(0, 0, 0);
+    flex: 0 0 100%;
+    min-width: 0;
+  }
+}
+
+@layer components {
+  .content-container {
+    @apply max-w-[1440px] w-full mx-auto px-6;
+  }
+
+  .contrast-btn {
+    @apply px-4 py-2 border border-black rounded-full hover:bg-black hover:text-white transition-colors duration-200 ease-in;
+  }
+
+  /* Typography from backup */
+  .text-xl {
+    @apply font-light tracking-normal;
+  }
+  .text-lg {
+    @apply text-base font-light tracking-normal;
+  }
+  .text-md {
+    @apply text-[14px] leading-[22px] font-light tracking-normal;
+  }
+  .text-sm {
+    @apply text-[12px] font-light tracking-normal;
+  }
+
+  .label-sm {
+    @apply text-[12px] leading-[20px] font-normal tracking-normal;
+  }
+  .label-md {
+    @apply text-[14px] leading-[22px] font-normal tracking-normal;
+  }
+  .label-lg {
+    @apply text-[16px] leading-[24px] font-semibold tracking-normal;
+  }
+  .label-xl {
+    @apply text-[20px] leading-[28px] font-semibold tracking-normal;
+  }
+
+  .heading-xs {
+    @apply text-[14px] leading-[22px] font-medium tracking-normal;
+  }
+  .heading-sm {
+    @apply text-[16px] leading-[24px] font-medium tracking-normal;
+  }
+  .heading-md {
+    @apply text-[24px] leading-[32px] font-medium tracking-normal max-md:text-[20px] max-md:leading-[28px];
+  }
+  .heading-lg {
+    @apply text-[32px] leading-[40px] font-medium tracking-normal max-md:text-[24px] max-md:leading-[32px];
+  }
+  .heading-xl {
+    @apply text-[40px] leading-[48px] font-medium tracking-normal max-md:text-[32px] max-md:leading-[40px];
+  }
+
+  .display-sm {
+    @apply text-[56px] leading-[64px] font-medium tracking-normal max-md:text-[32px] max-md:leading-[40px];
+  }
+  .display-md {
+    @apply text-[64px] leading-[72px] font-medium tracking-normal max-md:text-[40px] max-md:leading-[48px];
+  }
+  
+  .container {
+    @apply px-4 md:px-5 max-w-full w-full lg:py-8 py-4 lg:px-8;
+  }
+
+  /* Original typography classes */
+  .text-xsmall-regular {
+    @apply text-[10px] leading-4 font-normal;
+  }
+
+  .text-small-regular {
+    @apply text-xs leading-5 font-normal;
+  }
+
+  .text-small-semi {
+    @apply text-xs leading-5 font-semibold;
+  }
+
+  .text-base-regular {
+    @apply text-sm leading-6 font-normal;
+  }
+
+  .text-base-semi {
+    @apply text-sm leading-6 font-semibold;
+  }
+
+  .text-large-regular {
+    @apply text-base leading-6 font-normal;
+  }
+
+  .text-large-semi {
+    @apply text-base leading-6 font-semibold;
+  }
+
+  .text-xl-regular {
+    @apply text-2xl leading-[36px] font-normal;
+  }
+
+  .text-xl-semi {
+    @apply text-2xl leading-[36px] font-semibold;
+  }
+
+  .text-2xl-regular {
+    @apply text-[30px] leading-[48px] font-normal;
+  }
+
+  .text-2xl-semi {
+    @apply text-[30px] leading-[48px] font-semibold;
+  }
+
+  .text-3xl-regular {
+    @apply text-[32px] leading-[44px] font-normal;
+  }
+
+  .text-3xl-semi {
+    @apply text-[32px] leading-[44px] font-semibold;
+  }
+}
