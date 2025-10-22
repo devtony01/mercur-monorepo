@@ -14,7 +14,7 @@
   ],
   "scripts": {
     "resolve:aliases": "tsc --showConfig -p tsconfig.json > tsconfig.resolved.json && tsc-alias -p tsconfig.resolved.json && rimraf tsconfig.resolved.json",
-    "build": "medusa build && pnpm run resolve:aliases && rm -f public && ln -s .medusa/server/public/ public",
+    "build": "pnpm exec medusa build && pnpm run resolve:aliases && rm -f public && ln -s .medusa/server/public/ public",
     "seed": "medusa exec ./src/scripts/seed.ts",
     "sync:algolia": "medusa exec ./src/scripts/sync-algolia.ts",
     "start": "medusa start --types=false",
@@ -111,6 +111,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.15.0",
+    "@medusajs/cli": "catalog:",
     "@medusajs/medusa-oas-cli": "catalog:",
     "@medusajs/test-utils": "catalog:",
     "@mikro-orm/cli": "catalog:",

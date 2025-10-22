@@ -1,73 +1,62 @@
-# Base image
-FROM node:20-alpine AS base
-
-# Install pnpm
-RUN npm install -g pnpm@9.5.0
-
-# Install dependencies only when needed
-FROM base AS deps
-RUN apk add --no-cache libc6-compat
+# BUILDER - Stage 1
+FROM node:22-alpine AS builder
 WORKDIR /app
-
-# Copy package files
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/storefront/package.json ./apps/storefront/package.json
-
-# Install dependencies
-RUN pnpm install --frozen-lockfile
-
-# Development stage
-FROM base AS development
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/storefront/node_modules ./apps/storefront/node_modules
+# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
+RUN apk update && apk add --no-cache libc6-compat
+RUN npm install --global --no-update-notifier --no-fund turbo@2.5.4
 COPY . .
+RUN turbo prune --scope=storefront --docker
 
-WORKDIR /app/apps/storefront
-EXPOSE 8000
-
-ENV PORT=8000
-ENV HOSTNAME="0.0.0.0"
-
-CMD ["pnpm", "dev"]
-
-# Build stage
-FROM base AS builder
+# INSTALLER - Stage 2
+FROM node:22-alpine AS installer
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/storefront/node_modules ./apps/storefront/node_modules
-COPY . .
+# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
+RUN apk update && apk add --no-cache libc6-compat
+RUN npm install --global --no-update-notifier --no-fund pnpm@9.5.0
 
-WORKDIR /app/apps/storefront
+# First install the dependencies (as they change less often)
+COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+RUN pnpm fetch
 
-# Build the application
-RUN pnpm build
+# Build the project and its dependencies
+COPY --from=builder /app/out/pnpm-workspace.yaml ./pnpm-workspace.yaml
+COPY --from=builder /app/out/full/ .
+RUN pnpm install -r --prefer-offline --ignore-scripts
+COPY --from=builder /app/out/full/turbo.json ./turbo.json
 
-# Production stage
-FROM base AS production
-WORKDIR /app
+# DEVELOPMENT - Stage 3
+FROM installer AS development
+CMD pnpm turbo run dev --filter=storefront
 
-ENV NODE_ENV=production
+# APP_BUILDER - Stage 4
+FROM installer AS app_builder
+
+ARG APP_ENV
+ENV NEXT_PUBLIC_APP_ENV=$APP_ENV
 ENV NEXT_TELEMETRY_DISABLED=1
 
+RUN pnpm turbo run build --filter=storefront...
+
+# RUNNER - Stage 5
+FROM node:22-alpine AS runner
+WORKDIR /app
+
+# Don't run production as root
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
+USER nextjs
 
-COPY --from=builder /app/apps/storefront/public ./public
-
-# Set the correct permission for prerender cache
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
+COPY --from=app_builder /app/apps/storefront/next.config.js .
+COPY --from=app_builder /app/apps/storefront/package.json .
 
 # Automatically leverage output traces to reduce image size
-COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/.next/static ./.next/static
-
-USER nextjs
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=app_builder --chown=nextjs:nodejs /app/apps/storefront/.next/standalone ./
+COPY --from=app_builder --chown=nextjs:nodejs /app/apps/storefront/.next/static ./apps/storefront/.next/static
+COPY --from=app_builder --chown=nextjs:nodejs /app/apps/storefront/public ./apps/storefront/public
 
 EXPOSE 8000
 
 ENV PORT=8000
-ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "server.js"]
+CMD ["node", "apps/storefront/server.js"]

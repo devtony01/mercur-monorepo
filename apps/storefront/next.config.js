@@ -13,6 +13,8 @@ const S3_PATHNAME = process.env.MEDUSA_CLOUD_S3_PATHNAME
  */
 const nextConfig = {
   reactStrictMode: true,
+  output: 'standalone',
+  outputFileTracingRoot: require('path').join(__dirname, '../../'), // this includes files from the monorepo base two directories up
   logging: {
     fetches: {
       fullUrl: true,

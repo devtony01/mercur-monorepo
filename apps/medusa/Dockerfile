@@ -1,58 +1,55 @@
-FROM node:20-alpine AS base
-
-# Install pnpm
-RUN npm install -g pnpm@9.5.0
-
-FROM base AS builder
+# BUILDER - Stage 1
+FROM node:22-alpine AS builder
+WORKDIR /app
 # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk update
-RUN apk add --no-cache libc6-compat
-# Set working directory
-WORKDIR /app
-RUN pnpm add -g turbo
+RUN apk update && apk add --no-cache libc6-compat
+RUN npm install --global --no-update-notifier --no-fund turbo@2.5.4
 COPY . .
-RUN turbo prune medusa --docker
+RUN turbo prune --scope=medusa --docker
 
-# Add lockfile and package.json's of isolated subworkspace
-FROM base AS installer
-RUN apk update
-RUN apk add --no-cache libc6-compat
+# INSTALLER - Stage 2
+FROM node:22-alpine AS installer
 WORKDIR /app
+# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
+RUN apk update && apk add --no-cache libc6-compat
+RUN npm install --global --no-update-notifier --no-fund pnpm@9.5.0
+RUN npm install --global --no-update-notifier --no-fund @medusajs/cli@2.10.3
 
-# First install dependencies (as they change less often)
-COPY --from=builder /app/out/json/ .
+# First install the dependencies (as they change less often)
 COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
-COPY --from=builder /app/out/pnpm-workspace.yaml ./pnpm-workspace.yaml
-RUN pnpm install --frozen-lockfile
+RUN pnpm fetch
 
 # Build the project and its dependencies
+COPY --from=builder /app/out/pnpm-workspace.yaml ./pnpm-workspace.yaml
 COPY --from=builder /app/out/full/ .
+RUN pnpm install -r --prefer-offline --ignore-scripts
+COPY --from=builder /app/out/full/turbo.json ./turbo.json
 
-# Uncomment and use build args to enable remote caching
-# ARG TURBO_TEAM
-# ENV TURBO_TEAM=$TURBO_TEAM
+# Build the medusa app
+RUN pnpm turbo run build --filter=medusa
 
-# ARG TURBO_TOKEN
-# ENV TURBO_TOKEN=$TURBO_TOKEN
+# DEVELOPMENT - Stage 3
+FROM installer AS development
+WORKDIR /app/apps/medusa
+EXPOSE 9000
+CMD ["pnpm", "dev"]
 
-RUN pnpm turbo build
-
-FROM base AS runner
+# RUNNER - Stage 4 (Production)
+FROM node:22-alpine AS runner
 WORKDIR /app
+# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
+RUN apk update && apk add --no-cache libc6-compat
+RUN npm install --global --no-update-notifier --no-fund pnpm@9.5.0
+RUN npm install --global --no-update-notifier --no-fund @medusajs/cli@2.10.3
 
 # Don't run production as root
 RUN addgroup --system --gid 1001 medusa
 RUN adduser --system --uid 1001 medusa
-
-# Ensure the medusa user owns the medusa folder
-RUN mkdir -p /app/apps/medusa/static
-RUN chown -R medusa:medusa /app/apps/medusa
-
 USER medusa
-COPY --from=installer /app .
+
+COPY --from=installer --chown=medusa:medusa /app .
 
 WORKDIR /app/apps/medusa
-
-RUN pnpm db:migrate
+EXPOSE 9000
 
 CMD ["pnpm", "start"]

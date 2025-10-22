@@ -1,0 +1,46 @@
+services:
+  - type: web
+    name: mercur-backend
+    env: docker
+    dockerfilePath: ./apps/medusa/Dockerfile
+    dockerContext: .
+    dockerCommand: pnpm start
+    plan: free
+    port: 9000
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 9000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: COOKIE_SECRET
+        generateValue: true
+      - key: MEDUSA_FF_INDEX_ENGINE
+        value: true
+      - key: MEDUSA_FF_VIEW_CONFIGURATIONS
+        value: true
+
+  - type: web
+    name: mercur-storefront
+    env: docker
+    dockerfilePath: ./apps/storefront/Dockerfile
+    dockerContext: .
+    plan: free
+    port: 8000
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8000
+      - key: NEXT_PUBLIC_DEFAULT_REGION
+        value: us
+
+databases:
+  - name: mercur-postgres
+    databaseName: mercur
+    user: mercur
+    plan: free
+
+  - name: mercur-redis
+    plan: free

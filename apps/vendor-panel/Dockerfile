@@ -1,10 +1,7 @@
-# Base image
-FROM node:20-alpine AS base
-
-# Install pnpm
+# Multi-stage build for Vite Vendor Panel
+FROM node:22-alpine AS base
 RUN npm install -g pnpm@9.5.0
 
-# Install dependencies only when needed
 FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
@@ -12,53 +9,25 @@ WORKDIR /app
 # Copy package files
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/vendor-panel/package.json ./apps/vendor-panel/package.json
+COPY packages ./packages
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Development stage
-FROM base AS installer
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/vendor-panel/node_modules ./apps/vendor-panel/node_modules
-COPY . .
-
-WORKDIR /app/apps/vendor-panel
-EXPOSE 3001
-
-ENV PORT=3001
-ENV HOSTNAME="0.0.0.0"
-
-CMD ["pnpm", "dev"]
-
-# Build stage
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/vendor-panel/node_modules ./apps/vendor-panel/node_modules
 COPY . .
 
-WORKDIR /app/apps/vendor-panel
+# Build the vendor panel
+RUN pnpm --filter vendor-panel build
 
-# Build the application
-RUN pnpm build
+FROM nginx:alpine AS runner
+# Copy built files to nginx
+COPY --from=builder /app/apps/vendor-panel/dist /usr/share/nginx/html
 
-# Production stage
-FROM base AS production
-WORKDIR /app
+# Copy nginx config
+COPY apps/vendor-panel/nginx.conf /etc/nginx/conf.d/default.conf
 
-ENV NODE_ENV=production
-
-RUN addgroup --system --gid 1001 vite
-RUN adduser --system --uid 1001 vite
-
-COPY --from=builder --chown=vite:vite /app/apps/vendor-panel/dist ./dist
-
-USER vite
-
-EXPOSE 3001
-
-ENV PORT=3001
-ENV HOSTNAME="0.0.0.0"
-
-CMD ["pnpm", "preview"]
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
